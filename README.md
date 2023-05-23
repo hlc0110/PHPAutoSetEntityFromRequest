@@ -1,0 +1,2 @@
+# PHPAutoSetEntityFromRequest
+使用反射将请求提交的参数，绑定到已有的实体类上
