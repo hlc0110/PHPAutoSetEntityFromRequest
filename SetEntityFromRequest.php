@@ -28,7 +28,7 @@ class RequestParamsBindManager{
     }
     // 这里可以做一些过滤
     public static function getReqValue($name){
-        return get_req_value($name);
+        return $_REQUEST($name);
     }
 }
 
