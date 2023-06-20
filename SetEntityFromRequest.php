@@ -4,32 +4,34 @@
  * 如果请求参数过多，手动挨个接收代码会很长
  * 注意：实体类的方法名是标准的getXxx or setXxx
  */
-class RequestParamsBindEntity{
-    private $bindObject;        // 需要绑定的实体类对象
-    private $reflection;
-    public function __construct($bindObject){
-        $this->bindObject = $bindObject;
-        $this->reflection = new ReflectionClass($this->bindObject);
-    }
+class RequestParamsBindManager{
+    private static $bindObject;        // 需要绑定的实体类
+    private static $reflection;
 
     /**
      * @throws ReflectionException
      */
-    public function bindFromRequest(){
-        $attrs = $this->reflection->getProperties();        // ReflectionProperty 数组
+    public static function bind($bindObject){
+        self::$reflection = new ReflectionClass($bindObject);
+        self::$bindObject = $bindObject;
+
+        $attrs = self::$reflection->getProperties();        // ReflectionProperty 数组
         foreach ($attrs as $attr){
             $requestName = $attr->getName();
             $setAttrMethod = 'set' . ucfirst($requestName);
-            if(isset($_REQUEST[$requestName]) && $this->reflection->hasMethod($setAttrMethod)){
-                ($this->reflection->getMethod($setAttrMethod))->invoke($this->bindObject, $this->getReqValue($requestName));
+            if(isset($_REQUEST[$requestName]) && self::$reflection->hasMethod($setAttrMethod)){
+                $method = self::$reflection->getMethod($setAttrMethod);
+                $method->invoke(self::$bindObject, self::getReqValue($requestName));
             }
         }
+        return self::$bindObject;
     }
     // 这里可以做一些过滤
-    public function getReqValue($name){
-        return $_REQUEST[$name];
+    public static function getReqValue($name){
+        return get_req_value($name);
     }
 }
+
 
 
 /** 以下是业务代码 **/
@@ -60,13 +62,11 @@ class RequestParmas{
     }
 }
 
-$requestParmas = new RequestParmas();
-$requestParamsBindEntity = new RequestParamsBindEntity($requestParmas);
-$requestParamsBindEntity->bindFromRequest();
+// 接收参数
+$requestParmas = RequestParamsBindManager::bind(new RequestParmas());
 
 print_r($requestParmas);
 
 // 使用接收的参数
 $requestParmas->getUid();
-
 ?>
